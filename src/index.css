@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-surface: #f7fafc;
+  --color-surface-container-low: #f1f4f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-dim: #d7dadc;
+  
+  --color-primary-brand: #002045;
+  --color-primary-container: #1a365d;
+  --color-secondary-brand: #1960a3;
+  --color-secondary-fixed: #d3e4ff;
+  
+  --color-tertiary-fixed-dim: #f8bc4b;
+  --color-on-tertiary-fixed: #271900;
+  --color-on-tertiary-fixed-variant: #5f4100;
+  
+  --color-on-surface: #181c1e;
+  --color-on-surface-variant: #43474e;
+  --color-on-primary-fixed-variant: #2d476f;
+  --color-on-primary-fixed: #001b3c;
+
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+}
+
+@layer base {
+  body {
+    @apply bg-surface font-body text-on-surface antialiased;
+  }
+}
+
+.glass-panel {
+  @apply backdrop-blur-xl bg-white/70;
+}
+
+.primary-gradient {
+  background: linear-gradient(135deg, var(--color-primary-brand) 0%, var(--color-primary-container) 100%);
+}
+
+.whisper-shadow {
+  box-shadow: 0px 20px 40px rgba(24, 28, 30, 0.06);
+}
+
+/* Custom Toggle Styles */
+.toggle-track {
+  @apply w-12 h-6 rounded-full bg-surface-dim relative transition-all cursor-pointer;
+}
+
+.toggle-track.active {
+  @apply bg-secondary-brand;
+}
+
+.toggle-thumb {
+  @apply absolute w-4 h-4 bg-white rounded-full top-1 left-1 transition-all;
+}
+
+.toggle-track.active .toggle-thumb {
+  @apply left-7;
+}
