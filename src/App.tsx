@@ -36,8 +36,13 @@ import {
   Eye,
   Smile,
   TrendingUp,
-  Mic
+  Mic,
+  Camera,
+  Image as ImageIcon,
+  Loader2,
+  Download
 } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 import { motion, AnimatePresence } from 'motion/react';
 
 // --- Types ---
@@ -214,6 +219,56 @@ export default function App() {
   const [appName, setAppName] = useState('[My AI App]');
   const [isEditingAppName, setIsEditingAppName] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState('Profile');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportedImageUrl, setExportedImageUrl] = useState<string | null>(null);
+
+  const generateSocialMediaImage = async () => {
+    setIsExporting(true);
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    const prompt = `
+      A professional, high-resolution 4K screenshot of a modern SaaS dashboard named "ComplyAI". 
+      The UI is clean, editorial, and "Trust-Tech" themed with a white and slate-blue color palette. 
+      
+      Layout:
+      - Left Sidebar: Navigation items with icons (Feature Map, Compliance Report, Policy Library).
+      - Main Content: 
+        - Large headline: "Map Your Product's AI Compliance DNA".
+        - Section 1: A beautiful interactive global map with highlighted regions like EU, USA, and Singapore.
+        - Section 2: A grid of "Software Features" cards. Each card has a Lucide-style icon (Scan, Sparkles, Brain), a label (e.g., "Facial Recognition", "Generative AI"), and a colorful pill-shaped risk badge (Red "High Risk", Amber "Medium Risk", Green "Low Risk").
+        - A prominent circular compliance score gauge showing "85%" in a bold, modern font.
+      
+      The overall aesthetic is sophisticated, professional, and high-end, suitable for a LinkedIn or Twitter product launch post. 
+      The lighting is soft, and the UI elements have subtle "whisper shadows" for depth.
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image-preview',
+        contents: {
+          parts: [{ text: prompt }],
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: "16:9",
+            imageSize: "4K"
+          }
+        },
+      });
+
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          const base64Data = part.inlineData.data;
+          setExportedImageUrl(`data:image/png;base64,${base64Data}`);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const toggleFeature = (id: string) => {
     setFeatures(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
@@ -233,6 +288,63 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-surface">
+      {/* Social Media Export Modal */}
+      <AnimatePresence>
+        {exportedImageUrl && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 max-w-5xl w-full shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setExportedImageUrl(null)}
+                className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Social Media Preview</h3>
+                <p className="text-slate-500">High-resolution 4K mockup generated for your product launch.</p>
+              </div>
+
+              <div className="aspect-video rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-50 mb-6">
+                <img 
+                  src={exportedImageUrl} 
+                  alt="Social Media Export" 
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <button 
+                  onClick={() => setExportedImageUrl(null)}
+                  className="px-6 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-xl transition-colors"
+                >
+                  Close
+                </button>
+                <a 
+                  href={exportedImageUrl} 
+                  download="complyai-social-media.png"
+                  className="px-8 py-2 bg-primary-brand text-white font-bold rounded-xl hover:bg-primary-brand/90 transition-all flex items-center gap-2"
+                >
+                  <Download size={18} />
+                  Download 4K Image
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -364,8 +476,17 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
+                    className="flex flex-col items-center gap-4"
                   >
                     <ComplianceScore score={complianceScore} />
+                    <button 
+                      onClick={generateSocialMediaImage}
+                      disabled={isExporting}
+                      className="flex items-center gap-2 px-6 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all text-xs font-bold shadow-sm disabled:opacity-50"
+                    >
+                      {isExporting ? <Loader2 className="animate-spin" size={14} /> : <Camera size={14} />}
+                      {isExporting ? 'Generating Mockup...' : 'Export for Social Media'}
+                    </button>
                   </motion.div>
                 </div>
 
